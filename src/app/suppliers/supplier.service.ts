@@ -10,6 +10,8 @@ import {
   tap,
   mergeMap,
   switchMap,
+  catchError,
+  shareReplay,
 } from 'rxjs';
 import { Supplier } from './supplier';
 
@@ -18,6 +20,10 @@ import { Supplier } from './supplier';
 })
 export class SupplierService {
   suppliersUrl = 'api/suppliers';
+
+  suppliers$ = this.http
+    .get<Supplier[]>(this.suppliersUrl)
+    .pipe(shareReplay(1), catchError(this.handleError));
 
   suppliersWithMap$ = of(1, 5, 8).pipe(
     map((id) => this.http.get<Supplier>(this.suppliersUrl + `/${id}`))
