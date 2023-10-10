@@ -24,7 +24,6 @@ export class ProductListComponent {
   pageTitle = 'Product List';
   private categorySelectedSubject = new Subject<number>();
   categorySelectedAction$ = this.categorySelectedSubject.asObservable();
-  categories$ = this.productCategoryService.productsCategories$;
 
   private errorMessageSubject = new Subject<string>();
   errorMessage$ = this.errorMessageSubject.asObservable();
@@ -38,6 +37,13 @@ export class ProductListComponent {
         selectedCategoryId ? product.categoryId === selectedCategoryId : true
       )
     ),
+    catchError((error) => {
+      this.errorMessageSubject.next(error);
+      return EMPTY;
+    })
+  );
+
+  categories$ = this.productCategoryService.productsCategories$.pipe(
     catchError((error) => {
       this.errorMessageSubject.next(error);
       return EMPTY;

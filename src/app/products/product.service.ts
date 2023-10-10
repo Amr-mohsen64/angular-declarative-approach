@@ -1,3 +1,4 @@
+import { SupplierService } from './../suppliers/supplier.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProductCategoryService } from './../product-categories/product-category.service';
@@ -10,6 +11,7 @@ import {
   merge,
   Observable,
   scan,
+  shareReplay,
   Subject,
   tap,
   throwError,
@@ -45,7 +47,8 @@ export class ProductService {
             )?.name,
           } as Product)
       )
-    )
+    ),
+    shareReplay(1)
   );
 
   private productSelectedIdSubject = new BehaviorSubject<number>(0);
@@ -76,7 +79,8 @@ export class ProductService {
 
   constructor(
     private http: HttpClient,
-    private productCategoryService: ProductCategoryService
+    private productCategoryService: ProductCategoryService,
+    private supplierService: SupplierService
   ) {}
 
   selectedProductChanged(selectedProductId: number) {
