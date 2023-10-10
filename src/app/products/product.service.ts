@@ -7,17 +7,22 @@ import {
   BehaviorSubject,
   catchError,
   combineLatest,
+  filter,
+  forkJoin,
   map,
   merge,
   Observable,
+  of,
   scan,
   shareReplay,
   Subject,
+  switchMap,
   tap,
   throwError,
 } from 'rxjs';
 
 import { Product } from './product';
+import { Supplier } from '../suppliers/supplier';
 
 @Injectable({
   providedIn: 'root',
@@ -77,15 +82,33 @@ export class ProductService {
     )
   );
 
-  selectedProductSuppliers$ = combineLatest([
-    this.selectedProduct$,
-    this.supplierService.suppliers$,
-  ]).pipe(
-    map(([selectedProduct, suppliers]) =>
-      suppliers.filter((supplier) =>
-        selectedProduct?.supplierIds?.includes(supplier.id)
-      )
-    )
+  //get all approach
+  // selectedProductSuppliers$ = combineLatest([
+  //   this.selectedProduct$,
+  //   this.supplierService.suppliers$,
+  // ]).pipe(
+  //   map(([selectedProduct, suppliers]) =>
+  //     suppliers.filter((supplier) =>
+  //       selectedProduct?.supplierIds?.includes(supplier.id)
+  //     )
+  //   )
+  // );
+
+  //just in time approach
+  selectedProductSuppliers$ = this.selectedProduct$.pipe(
+    filter((product) => Boolean(product)), // we don't attempt to get suppliers if theres no selected product
+    switchMap((selectedProduct) => {
+      if (selectedProduct?.supplierIds) {
+        // takes array of obs and returns array if their emissions
+        return forkJoin(
+          //waits for http to complete before the fork join emits
+          selectedProduct?.supplierIds?.map((supplierId) =>
+            this.http.get<Supplier>(this.suppliersUrl + `/${supplierId}`)
+          )
+        );
+      } else return of([]);
+    }),
+    tap((suppliers) => console.log('suppliers =>' + suppliers))
   );
 
   constructor(
