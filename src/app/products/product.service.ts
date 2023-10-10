@@ -7,7 +7,10 @@ import {
   catchError,
   combineLatest,
   map,
+  merge,
   Observable,
+  scan,
+  Subject,
   tap,
   throwError,
 } from 'rxjs';
@@ -57,14 +60,32 @@ export class ProductService {
     )
   );
 
-  selectedProductChanged(selectedProductId: number) {
-    this.productSelectedIdSubject.next(selectedProductId);
-  }
+  productInsertSubject = new Subject<Product>();
+  productInsertAction$ = this.productInsertSubject.asObservable();
+
+  productsWithAdd$ = merge(
+    this.productsWithCategory$,
+    this.productInsertAction$
+  ).pipe(
+    //if type of emitted value from merge is array then copy it ,else type is add product so copy old products and push new product
+    scan(
+      (acc, value) => (value instanceof Array ? [...value] : [...acc, value]),
+      [] as Product[]
+    )
+  );
 
   constructor(
     private http: HttpClient,
     private productCategoryService: ProductCategoryService
   ) {}
+
+  selectedProductChanged(selectedProductId: number) {
+    this.productSelectedIdSubject.next(selectedProductId);
+  }
+
+  addProduct() {
+    this.productInsertSubject.next(this.fakeProduct());
+  }
 
   private fakeProduct(): Product {
     return {
@@ -74,7 +95,7 @@ export class ProductService {
       description: 'Our new product',
       price: 8.9,
       categoryId: 3,
-      // category: 'Toolbox',
+      category: 'Toolbox',
       quantityInStock: 30,
     };
   }
