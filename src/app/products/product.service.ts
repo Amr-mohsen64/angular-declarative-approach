@@ -97,6 +97,7 @@ export class ProductService {
   //just in time approach
   selectedProductSuppliers$ = this.selectedProduct$.pipe(
     filter((product) => Boolean(product)), // we don't attempt to get suppliers if theres no selected product
+    //if the use quickly change the product , switch map cancel the old emission and start with new selected product
     switchMap((selectedProduct) => {
       if (selectedProduct?.supplierIds) {
         // takes array of obs and returns array if their emissions
@@ -108,7 +109,7 @@ export class ProductService {
         );
       } else return of([]);
     }),
-    tap((suppliers) => console.log('suppliers =>' + suppliers))
+    tap((suppliers) => console.log('suppliers =>', suppliers))
   );
 
   constructor(
